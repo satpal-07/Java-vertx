@@ -1,17 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/main.css">
     <title>Welcome to KRY</title>
 </head>
-<body>
-KRY status poller
-<ul id="service-list">
-</ul>
-<input type="text" id="url-name">
-<button id="post-service">Save</button>
 
+<body>
+    <div class="main-container">
+        
+        <h2 class="title">KRY status poller</h2>
+        <div class="table-container">
+            <table id="service-table">
+                <tr>
+                    <th>Service Name</th>
+                    <th>Status</th>
+                    <th>Added On</th>
+                    <th>Delete</th>
+                </tr>
+            </table>
+        </div>
+        <div class="submit-container">
+            <div>
+                <input type="text" oninput="showInvalidUrlMessage()" placeholder="Add service name" id="url-name">
+                <div class="error-message" id="error-message" hidden>Please provide valid url!</div> 
+            </div>
+            <button id="post-service">Save</button>
+        </div>
+    </div>
 </body>
 <script src="static/code.js">
 </script>
+
 </html>

@@ -13,11 +13,10 @@ public class DBMigration {
   public static void main(String[] args) {
     VERTX = Vertx.vertx();
     CONNECTOR = new DBConnector(VERTX);
-    //DB Operations
+    // DB Operations - comment out below to perform db operations
     // create table
 //    createTable();
     addMockData();
-//    selectAll();
 //    dropTable();
   }
 
@@ -40,21 +39,6 @@ public class DBMigration {
         System.out.println("Mock data added!");
       } else {
         done.cause().printStackTrace();
-      }
-      VERTX.close(shutdown -> {
-        System.exit(0);
-      });
-    });
-  }
-
-  private static void selectAll(){
-    CONNECTOR.query("SELECT * FROM service").setHandler(result -> {
-      if(result.succeeded()){
-        for (JsonObject row : result.result().getRows()) {
-          System.out.println(row.getValue("url"));
-        }
-      } else {
-        result.cause().printStackTrace();
       }
       VERTX.close(shutdown -> {
         System.exit(0);

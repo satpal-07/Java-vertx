@@ -18,44 +18,43 @@ public class MainVerticle extends AbstractVerticle {
   private HashMap<String, String> services = new HashMap<>();
   private DBConnector connector;
   private BackgroundPoller poller = new BackgroundPoller();
-  private static final String INITIAL_STATUS = "UNKNOWN";
+  private static final String INITIAL_STATUS = "PENDING";
+  private static final int POOLING_TIMER_MS = 20000;
 
   @Override
   public void start(Future<Void> startFuture) {
-
-    connector = new DBConnector(vertx);
-    Router router = Router.router(vertx);
-    router.route().handler(BodyHandler.create());
-    connector.query("SELECT * FROM service").setHandler(result -> {
-      if(result.succeeded()){
-        System.out.println("data we have ------" + result.result().toJson());
-        for (JsonObject row : result.result().getRows()) {
-          services.put(row.getValue("url").toString(), createNewServiceJsonString(row.getValue("time").toString()));
-        }
-      } else {
-        result.cause().printStackTrace();
-      }
-    });
-
-//    services.put("https://www.kry.se", "UNKNOWN");
-    vertx.setPeriodic(1000 * 60, timerId -> poller.pollServices(services));
-    setRoutes(router);
-    vertx
-        .createHttpServer()
-        .requestHandler(router)
-        .listen(8080, result -> {
-          if (result.succeeded()) {
-            System.out.println("KRY code test service started");
-            startFuture.complete();
-          } else {
-            startFuture.fail(result.cause());
+      connector = new DBConnector(vertx);
+      Router router = Router.router(vertx);
+      router.route().handler(BodyHandler.create());
+      connector.query("SELECT * FROM service").setHandler(result -> {
+        if(result.succeeded()){
+          System.out.println("data we have ------" + result.result().toJson());
+          for (JsonObject row : result.result().getRows()) {
+            services.put(row.getValue("url").toString(), createNewServiceJsonString(row.getValue("time").toString()));
           }
-        });
+        } else {
+          result.cause().printStackTrace();
+        }
+      });
+      vertx.setPeriodic(POOLING_TIMER_MS, timerId -> poller.pollServices(services, vertx));
+      setRoutes(router);
+      vertx.createHttpServer()
+          .requestHandler(router)
+          .listen(8080, result -> {
+            if (result.succeeded()) {
+              System.out.println("KRY code test service started");
+              startFuture.complete();
+            } else {
+              startFuture.fail(result.cause());
+            }
+          });
   }
 
   private void setRoutes(Router router){
     router.route("/*").handler(StaticHandler.create());
-    router.get("/service").handler(req -> {
+    router.get("/listService").handler(req -> {
+       JsonObject jsonResponse = new JsonObject();
+       jsonResponse.put("reloadTimer", POOLING_TIMER_MS);
       List<JsonObject> jsonServices = services
           .entrySet()
           .stream()
@@ -63,18 +62,19 @@ public class MainVerticle extends AbstractVerticle {
               new JsonObject(service.getValue())
                   .put("name", service.getKey()))
           .collect(Collectors.toList());
+      jsonResponse.put("listService", new JsonArray(jsonServices));
       req.response()
           .putHeader("content-type", "application/json")
-          .end(new JsonArray(jsonServices).encode());
+          .end(jsonResponse.encode());
     });
 
     /**
-     * Add route
+     * Add Service route
      */
-    router.post("/service").handler(req -> {
+    router.post("/addService").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
       String timeStamp = LocalDateTime.now().toString();
-      connector.query("INSERT INTO service (url, time) VALUES ('"+  jsonBody.getString("url")  +"', '" + timeStamp + "')").setHandler(done -> {
+      connector.query("INSERT INTO service (url, time) VALUES ('"+  jsonBody.getString("url")  + "', '" + timeStamp + "')").setHandler(done -> {
         if(done.succeeded()){
           System.out.println("Service saved to the Database!");
         } else {
@@ -88,11 +88,11 @@ public class MainVerticle extends AbstractVerticle {
     });
 
     /**
-     * Delete route
+     * Delete Service route
      */
     router.post("/deleteService").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
-      connector.query("DELETE FROM service WHERE url='"+  jsonBody.getString("url")  +"')").setHandler(done -> {
+      connector.query("DELETE FROM service WHERE url='"+  jsonBody.getString("url")  + "'").setHandler(done -> {
         if(done.succeeded()){
           System.out.println("Service deleted from the Database!");
         } else {

@@ -1,0 +1,38 @@
+body > div table {
+    width: 100%;
+}
+
+body > div table th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+body > div table tr:nth-child(even) {
+    background-color: #dddddd;
+}
+.main-container > .submit-container input {
+    padding: 8px 16px;
+    margin: 4px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    box-sizing: border-box;
+}
+
+.main-container > .submit-container button {
+    background-color: rgb(107, 132, 247);
+    color: white;
+    padding: 8px 16px;
+    margin: 4px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.error-message {
+    color: red;
+}
+
+.main-container > .submit-container {
+    text-align: center
+}
