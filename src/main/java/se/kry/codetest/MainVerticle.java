@@ -8,6 +8,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,16 +16,28 @@ import java.util.stream.Collectors;
 public class MainVerticle extends AbstractVerticle {
 
   private HashMap<String, String> services = new HashMap<>();
-  //TODO use this
   private DBConnector connector;
   private BackgroundPoller poller = new BackgroundPoller();
+  private static final String INITIAL_STATUS = "UNKNOWN";
 
   @Override
   public void start(Future<Void> startFuture) {
+
     connector = new DBConnector(vertx);
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
-    services.put("https://www.kry.se", "UNKNOWN");
+    connector.query("SELECT * FROM service").setHandler(result -> {
+      if(result.succeeded()){
+        System.out.println("data we have ------" + result.result().toJson());
+        for (JsonObject row : result.result().getRows()) {
+          services.put(row.getValue("url").toString(), createNewServiceJsonString(row.getValue("time").toString()));
+        }
+      } else {
+        result.cause().printStackTrace();
+      }
+    });
+
+//    services.put("https://www.kry.se", "UNKNOWN");
     vertx.setPeriodic(1000 * 60, timerId -> poller.pollServices(services));
     setRoutes(router);
     vertx
@@ -47,21 +60,57 @@ public class MainVerticle extends AbstractVerticle {
           .entrySet()
           .stream()
           .map(service ->
-              new JsonObject()
-                  .put("name", service.getKey())
-                  .put("status", service.getValue()))
+              new JsonObject(service.getValue())
+                  .put("name", service.getKey()))
           .collect(Collectors.toList());
       req.response()
           .putHeader("content-type", "application/json")
           .end(new JsonArray(jsonServices).encode());
     });
+
+    /**
+     * Add route
+     */
     router.post("/service").handler(req -> {
       JsonObject jsonBody = req.getBodyAsJson();
-      services.put(jsonBody.getString("url"), "UNKNOWN");
+      String timeStamp = LocalDateTime.now().toString();
+      connector.query("INSERT INTO service (url, time) VALUES ('"+  jsonBody.getString("url")  +"', '" + timeStamp + "')").setHandler(done -> {
+        if(done.succeeded()){
+          System.out.println("Service saved to the Database!");
+        } else {
+          done.cause().printStackTrace();
+        }
+      });
+      services.put(jsonBody.getString("url"), createNewServiceJsonString(timeStamp));
       req.response()
           .putHeader("content-type", "text/plain")
           .end("OK");
     });
+
+    /**
+     * Delete route
+     */
+    router.post("/deleteService").handler(req -> {
+      JsonObject jsonBody = req.getBodyAsJson();
+      connector.query("DELETE FROM service WHERE url='"+  jsonBody.getString("url")  +"')").setHandler(done -> {
+        if(done.succeeded()){
+          System.out.println("Service deleted from the Database!");
+        } else {
+          done.cause().printStackTrace();
+        }
+      });
+      services.remove(jsonBody.getString("url"));
+      req.response()
+              .putHeader("content-type", "text/plain")
+              .end("OK");
+    });
+  }
+
+  private String createNewServiceJsonString(String time) {
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.put("time", time);
+    jsonObject.put("status", INITIAL_STATUS);
+    return jsonObject.toString();
   }
 
 }

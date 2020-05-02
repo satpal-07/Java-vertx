@@ -1,20 +1,75 @@
 package se.kry.codetest.migrate;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import se.kry.codetest.DBConnector;
 
-public class DBMigration {
+import java.time.LocalDateTime;
+import java.util.Arrays;
 
+public class DBMigration {
+  private static Vertx VERTX;
+  private static DBConnector CONNECTOR;
   public static void main(String[] args) {
-    Vertx vertx = Vertx.vertx();
-    DBConnector connector = new DBConnector(vertx);
-    connector.query("CREATE TABLE IF NOT EXISTS service (url VARCHAR(128) NOT NULL)").setHandler(done -> {
+    VERTX = Vertx.vertx();
+    CONNECTOR = new DBConnector(VERTX);
+    //DB Operations
+    // create table
+//    createTable();
+    addMockData();
+//    selectAll();
+//    dropTable();
+  }
+
+  private static void createTable(){
+    CONNECTOR.query("CREATE TABLE IF NOT EXISTS service (url VARCHAR(128) NOT NULL, time VARCHAR(128))").setHandler(done -> {
       if(done.succeeded()){
-        System.out.println("completed db migrations");
+        System.out.println("Table created!");
       } else {
         done.cause().printStackTrace();
       }
-      vertx.close(shutdown -> {
+      VERTX.close(shutdown -> {
+        System.exit(0);
+      });
+    });
+  }
+
+  private static void addMockData() {
+    CONNECTOR.query("INSERT INTO service (url, time) VALUES ('" + "https://www.kry.se', '" + LocalDateTime.now().toString() + "')").setHandler(done -> {
+      if(done.succeeded()){
+        System.out.println("Mock data added!");
+      } else {
+        done.cause().printStackTrace();
+      }
+      VERTX.close(shutdown -> {
+        System.exit(0);
+      });
+    });
+  }
+
+  private static void selectAll(){
+    CONNECTOR.query("SELECT * FROM service").setHandler(result -> {
+      if(result.succeeded()){
+        for (JsonObject row : result.result().getRows()) {
+          System.out.println(row.getValue("url"));
+        }
+      } else {
+        result.cause().printStackTrace();
+      }
+      VERTX.close(shutdown -> {
+        System.exit(0);
+      });
+    });
+  }
+
+  private static void dropTable(){
+    CONNECTOR.query("DROP TABLE service").setHandler(done -> {
+      if(done.succeeded()){
+        System.out.println("Table deleted!");
+      } else {
+        done.cause().printStackTrace();
+      }
+      VERTX.close(shutdown -> {
         System.exit(0);
       });
     });

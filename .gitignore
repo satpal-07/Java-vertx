@@ -4,3 +4,5 @@ out/
 .gradle/
 gradle
 .vertx
+/bin/
+build/
