@@ -37,6 +37,11 @@ public class BackgroundPoller {
     return Future.succeededFuture();
   }
 
+  /**
+   * Validates provided URI
+   * @param uri - uri to be validated
+   * @return Boolean - true if valid else false
+   */
   private Boolean isUriValid(String uri){
     try {
       new URL(uri).toURI();

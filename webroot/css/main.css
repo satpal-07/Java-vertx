@@ -29,8 +29,14 @@ body > div table tr:nth-child(even) {
     cursor: pointer;
 }
 
+.main-container > .submit-container {
+    display: flex;
+}
+
 .main-container > .submit-container button {
     background-color: rgb(107, 132, 247);
+    margin-left: 10px;
+    max-height: 34px;
 }
 
 

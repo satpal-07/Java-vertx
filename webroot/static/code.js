@@ -1,11 +1,24 @@
 
-var isServiceReloadInvoked = false;
+let isServiceReloadInvoked = false;
 getServiceList();
 const saveButton = document.querySelector('#post-service');
 saveButton.onclick = evt => {
-    let urlName = document.querySelector('#url-name').value;
-    if(isUrlValid(urlName)) fetchPost('post', '/addService', urlName).then(res=> location.reload());
-    else document.getElementById('error-message').style.display = 'block';
+    // get url and remove all spaces
+    let input = document.querySelector('#url-name');
+    let urlName = input.value;
+    if (isUrlValid(urlName)) {
+        fetchPost('post', '/addService', urlName)
+            .then(res => {
+                input.value = '';
+                getServiceList();
+            })
+            .catch(err => {
+                console.error(err.message);
+            });
+    }
+    else {
+        document.getElementById('error-message').style.display = 'block';
+    }
 
 }
 
@@ -15,13 +28,15 @@ saveButton.onclick = evt => {
 function getServiceList() {
     const servicesRequest = new Request('/listService');
     fetch(servicesRequest)
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(responseJson) {
-        populateTable(responseJson.listService);
-        if(!isServiceReloadInvoked) reloadServices(responseJson.reloadTimer);
-    });
+        .then(response => response.json())
+        .then(responseJson => {
+            populateTable(responseJson.listService);
+            // reload the services periodically - NOTE: timer is fetched from BE
+            // reloadServices is only invoked once to avoid building up setInternal call stack
+            if (!isServiceReloadInvoked) reloadServices(responseJson.reloadTimer);
+        }).catch(err => {
+            console.error(err.message);
+        });
 }
 
 /**
@@ -29,18 +44,21 @@ function getServiceList() {
  * @param url - url to be invoked
  * @param serviceUrlName - url name to be sent as body param
  */
-function fetchPost(methodType, url,serviceUrlName) {
+function fetchPost(methodType, url, serviceUrlName) {
     return fetch(url, {
         method: methodType,
         headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/json'
         },
-      body: JSON.stringify({url:serviceUrlName})
+        body: JSON.stringify({ url: serviceUrlName })
     });
 }
 
-function showInvalidUrlMessage() {
+/**
+ * Function to hide the url invalid error message 
+ */
+function hideInvalidUrlMessage() {
     document.getElementById('error-message').style.display = 'none';
 }
 
@@ -50,7 +68,7 @@ function showInvalidUrlMessage() {
  * @return true if its valid else false
  */
 function isUrlValid(url) {
-    var urlRegEx = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/;
+    let urlRegEx = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/){1}[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/;
     return urlRegEx.test(url);
 }
 
@@ -58,13 +76,17 @@ function isUrlValid(url) {
  * Function that reloads the service list
  * @param milliseconds - interval time
  */
-function reloadServices(milliseconds){
+function reloadServices(milliseconds) {
     isServiceReloadInvoked = true;
-    setInterval(function(){
-       getServiceList();
+    setInterval(function () {
+        getServiceList();
     }, milliseconds);
 }
 
+/**
+ * Function that adds service data to the page
+ * @param serviceList - Array containing service json object
+ */
 function populateTable(serviceList) {
     const table = document.querySelector('#service-table');
     // remove existing services in the table before fetching and adding new ones
@@ -72,28 +94,33 @@ function populateTable(serviceList) {
     while (tableRows.length > 0) {
         table.removeChild(tableRows[0]);
     }
-    var rowIndex = 0;
+    let rowIndex = 0;
     serviceList.forEach(service => {
-        var formatTimeStamp = new Date(service.time).toLocaleString("en-UK");
-        var tableRow = document.createElement("TR");
-        var serviceUrlData = document.createElement("TD");
-        var serviceStatusData = document.createElement("TD");
-        var serviceAddTimeData = document.createElement("TD");
-        var deleteButtonData = document.createElement("TD");
-    
-        var div = document.createElement("div");
-        var deleteButton = document.createElement("button");
+        let formatTimeStamp = new Date(service.time).toLocaleString("en-UK");
+        let tableRow = document.createElement("TR");
+        let serviceUrlData = document.createElement("TD");
+        let serviceStatusData = document.createElement("TD");
+        let serviceAddTimeData = document.createElement("TD");
+        let deleteButtonData = document.createElement("TD");
+
+        let div = document.createElement("div");
+        let deleteButton = document.createElement("button");
         deleteButton.innerHTML = "Delete Service";
         deleteButton.rowIndex = rowIndex;
         deleteButton.onclick = evt => {
-            var rowIndex = evt.target.parentNode.parentNode.parentNode.rowIndex;
+            let rowIndex = evt.target.parentNode.parentNode.parentNode.rowIndex;
             table.deleteRow(rowIndex);
-            fetchPost('delete', '/deleteService', service.name);
+            fetchPost('delete', '/deleteService', service.name).catch(err => {
+                console.error(err.message);
+            });;
         }
         div.className = 'deleteButton';
         div.appendChild(deleteButton);
         serviceUrlData.appendChild(document.createTextNode(service.name));
         serviceStatusData.appendChild(document.createTextNode(service.status));
+        if (service.status === 'PENDING') serviceStatusData.style.backgroundColor = '#e4bc4f';
+        else if (service.status === 'OK') serviceStatusData.style.backgroundColor = '#78be6a';
+        else serviceStatusData.style.backgroundColor = '#f78686';
         serviceAddTimeData.appendChild(document.createTextNode(formatTimeStamp));
         deleteButtonData.appendChild(div);
         tableRow.className = 'service-row';

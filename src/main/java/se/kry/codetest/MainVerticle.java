@@ -19,7 +19,7 @@ public class MainVerticle extends AbstractVerticle {
   private DBConnector connector;
   private BackgroundPoller poller = new BackgroundPoller();
   private static final String INITIAL_STATUS = "PENDING";
-  private static final int POOLING_TIMER_MS = 40000;
+  private static final int POOLING_TIMER_MS = 20000;
 
   @Override
   public void start(Future<Void> startFuture) {
@@ -109,6 +109,11 @@ public class MainVerticle extends AbstractVerticle {
     });
   }
 
+  /**
+   * Creates Json string object of a service
+   * @param time - time stamp for created on field
+   * @return Json string
+   */
   private String createNewServiceJsonString(String time) {
     JsonObject jsonObject = new JsonObject();
     jsonObject.put("time", time);

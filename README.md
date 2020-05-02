@@ -9,21 +9,21 @@ There is also a wishlist of features in two separate tracks - if you have time l
 
 Critical issues (required to complete the assignment):
 
-- Whenever the server is restarted, any added services disappear
-- There's no way to delete individual services
-- We want to be able to name services and remember when they were added
-- The HTTP poller is not implemented
+- Whenever the server is restarted, any added services disappear - [x] Done
+- There's no way to delete individual services - [x] Done
+- We want to be able to name services and remember when they were added - [x] Done
+- The HTTP poller is not implemented - [x] Done
 
 Frontend/Web track:
-- We want full create/update/delete functionality for services
-- The results from the poller are not automatically shown to the user (you have to reload the page to see results)
-- We want to have informative and nice looking animations on add/remove services
+- We want full create/update/delete functionality for services - [ ] Todo
+- The results from the poller are not automatically shown to the user (you have to reload the page to see results) - [x] Done
+- We want to have informative and nice looking animations on add/remove services - [ ] Todo
 
 Backend track
-- Simultaneous writes sometimes causes strange behavior
-- Protect the poller from misbehaving services (for example answering really slowly)
-- Service URL's are not validated in any way ("sdgf" is probably not a valid service)
-- A user (with a different cookie/local storage) should not see the services added by another user
+- Simultaneous writes sometimes causes strange behavior - [ ] Todo
+- Protect the poller from misbehaving services (for example answering really slowly)  - [ ] Need to validate
+- Service URL's are not validated in any way ("sdgf" is probably not a valid service) - [x] Done - in FE and BE
+- A user (with a different cookie/local storage) should not see the services added by another user - [ ] Todo
 
 Spend maximum four hours working on this assignment - make sure to finish the issues you start.
 

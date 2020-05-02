@@ -14,12 +14,14 @@ public class DBMigration {
     VERTX = Vertx.vertx();
     CONNECTOR = new DBConnector(VERTX);
     // DB Operations - comment out below to perform db operations
-    // create table
 //    createTable();
-    addMockData();
+//    addMockData();
 //    dropTable();
   }
 
+  /**
+   * Helper function to create table
+   */
   private static void createTable(){
     CONNECTOR.query("CREATE TABLE IF NOT EXISTS service (url VARCHAR(128) NOT NULL, time VARCHAR(128))").setHandler(done -> {
       if(done.succeeded()){
@@ -33,6 +35,9 @@ public class DBMigration {
     });
   }
 
+  /**
+   * Helper function to add mock data
+   */
   private static void addMockData() {
     CONNECTOR.query("INSERT INTO service (url, time) VALUES ('" + "https://www.kry.se', '" + LocalDateTime.now().toString() + "')").setHandler(done -> {
       if(done.succeeded()){
@@ -46,6 +51,9 @@ public class DBMigration {
     });
   }
 
+  /**
+   * Helper function to drop table
+   */
   private static void dropTable(){
     CONNECTOR.query("DROP TABLE service").setHandler(done -> {
       if(done.succeeded()){
