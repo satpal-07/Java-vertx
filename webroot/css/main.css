@@ -20,8 +20,7 @@ body > div table tr:nth-child(even) {
     box-sizing: border-box;
 }
 
-.main-container > .submit-container button {
-    background-color: rgb(107, 132, 247);
+.main-container  button {
     color: white;
     padding: 8px 16px;
     margin: 4px 0;
@@ -29,6 +28,24 @@ body > div table tr:nth-child(even) {
     border-radius: 4px;
     cursor: pointer;
 }
+
+.main-container > .submit-container button {
+    background-color: rgb(107, 132, 247);
+}
+
+
+.main-container > .submit-container button:hover {
+    filter: brightness(90%);
+}
+
+.main-container > div table button {
+    background-color: #5e5e5e;
+}
+
+.main-container > div table button:hover {
+    filter: brightness(90%);
+}
+
 .error-message {
     color: red;
 }

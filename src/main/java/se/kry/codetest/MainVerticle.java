@@ -19,7 +19,7 @@ public class MainVerticle extends AbstractVerticle {
   private DBConnector connector;
   private BackgroundPoller poller = new BackgroundPoller();
   private static final String INITIAL_STATUS = "PENDING";
-  private static final int POOLING_TIMER_MS = 20000;
+  private static final int POOLING_TIMER_MS = 40000;
 
   @Override
   public void start(Future<Void> startFuture) {
@@ -53,25 +53,27 @@ public class MainVerticle extends AbstractVerticle {
   private void setRoutes(Router router){
     router.route("/*").handler(StaticHandler.create());
     router.get("/listService").handler(req -> {
-       JsonObject jsonResponse = new JsonObject();
-       jsonResponse.put("reloadTimer", POOLING_TIMER_MS);
+      System.out.println("Calling listService endpoint");
+      JsonObject jsonResponse = new JsonObject();
+      jsonResponse.put("reloadTimer", POOLING_TIMER_MS);
       List<JsonObject> jsonServices = services
-          .entrySet()
-          .stream()
-          .map(service ->
-              new JsonObject(service.getValue())
-                  .put("name", service.getKey()))
-          .collect(Collectors.toList());
+        .entrySet()
+        .stream()
+        .map(service ->
+            new JsonObject(service.getValue())
+                .put("name", service.getKey()))
+        .collect(Collectors.toList());
       jsonResponse.put("listService", new JsonArray(jsonServices));
       req.response()
-          .putHeader("content-type", "application/json")
-          .end(jsonResponse.encode());
+        .putHeader("content-type", "application/json")
+        .end(jsonResponse.encode());
     });
 
     /**
      * Add Service route
      */
     router.post("/addService").handler(req -> {
+      System.out.println("Calling addService endpoint");
       JsonObject jsonBody = req.getBodyAsJson();
       String timeStamp = LocalDateTime.now().toString();
       connector.query("INSERT INTO service (url, time) VALUES ('"+  jsonBody.getString("url")  + "', '" + timeStamp + "')").setHandler(done -> {
@@ -90,7 +92,8 @@ public class MainVerticle extends AbstractVerticle {
     /**
      * Delete Service route
      */
-    router.post("/deleteService").handler(req -> {
+    router.delete("/deleteService").handler(req -> {
+      System.out.println("Calling deleteService endpoint");
       JsonObject jsonBody = req.getBodyAsJson();
       connector.query("DELETE FROM service WHERE url='"+  jsonBody.getString("url")  + "'").setHandler(done -> {
         if(done.succeeded()){
